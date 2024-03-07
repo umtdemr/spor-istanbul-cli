@@ -39,6 +39,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) View() string {
 	if m.view == "sessions" {
 		return m.SessionSelectView()
+	} else if m.view == "wait" {
+		return m.WaitView()
 	}
 	return m.DateSelectView()
 }

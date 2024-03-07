@@ -34,6 +34,7 @@ func (m model) UpdateSessions(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// the selected state for the item that the cursor is pointing at.
 		case "enter", " ":
 			m.selectedSession = m.sessionChoices[m.cursor]
+			m.view = "wait"
 		}
 	}
 
@@ -46,10 +47,8 @@ func (m model) SessionSelectView() string {
 	// The header
 	s := fmt.Sprintf("Selected Date: %s,\nNow, please select the session you want to reserve\n\n", m.selectedDate.Format("02/01/2006"))
 
-	// Iterate over our choices
 	for i, choice := range m.sessionChoices {
 
-		// Is the cursor pointing at this choice?
 		cursor := " " // no cursor
 		if m.cursor == i {
 			cursor = ">" // cursor!
