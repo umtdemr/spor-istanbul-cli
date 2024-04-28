@@ -36,8 +36,8 @@ func Run() string {
 		log.Fatalf("Error while getting the RESPONSE: %s\n", err)
 	}
 
-	req.AddCookie(&http.Cookie{Name: "ASP.NET_SessionId", Value: ""})
-	req.AddCookie(&http.Cookie{Name: "_hjSessionUser_1859734", Value: ""})
+	req.AddCookie(&http.Cookie{Name: "ASP.NET_SessionId", Value: "ea2hpo0pvi4sfg4bnvrhkjoq"})
+	req.AddCookie(&http.Cookie{Name: "_hjSessionUser_1859734", Value: "eyJpZCI6ImJkMTgzNzA0LWFhYzYtNThjZS1iZWNjLTgxODI0YzgyZWRjMSIsImNyZWF0ZWQiOjE2NzIwNjM1MDUxODIsImV4aXN0aW5nIjp0cnVlfQ=="})
 
 	resp, err := client.Do(req)
 
@@ -53,8 +53,6 @@ func Run() string {
 		log.Fatalf("Couldn't read the body")
 	}
 
-	//body := string(bodyBytes)
-
 	newfile, _ := os.Create("newFile.html")
 
 	defer newfile.Close()
@@ -64,7 +62,7 @@ func Run() string {
 	if err != nil {
 		log.Fatal("error while parsing the doc\n")
 	}
-	doc, _ := goquery.NewDocumentFromReader(resp.Body)
+	doc, _ := goquery.NewDocumentFromReader(strings.NewReader(string(bodyBytes)))
 
 	initialText := ""
 	doc.Find("#pageContent_dvScheduler .panel").Each(func(i int, selection *goquery.Selection) {
