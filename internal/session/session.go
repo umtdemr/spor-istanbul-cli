@@ -7,3 +7,9 @@ type Session struct {
 	Limit     int
 	Time      string
 }
+
+type Subscription struct {
+	Name      string
+	Remaining string
+	Date      string
+}

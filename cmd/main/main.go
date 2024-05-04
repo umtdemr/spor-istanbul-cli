@@ -6,5 +6,5 @@ import (
 )
 
 func main() {
-	fmt.Println(ui.GenerateSessionScreen())
+	fmt.Println(ui.GenerateSubscriptionListScreen())
 }
