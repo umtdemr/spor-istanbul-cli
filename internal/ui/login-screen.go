@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/umtdemr/spor-istanbul-cli/internal/client"
 	"log"
 )
 
@@ -23,6 +24,7 @@ type model struct {
 	username  string
 	password  string
 	mode      string
+	loggedErr string
 	err       error
 }
 
@@ -60,6 +62,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, tea.ClearScrollArea
 			}
 			m.password = m.textInput.Value()
+
+			sessionId, loggedIn := client.Login(m.username, m.password)
+
+			if !loggedIn {
+				m.loggedErr = "please try again"
+			} else {
+				m.loggedErr = sessionId
+			}
+
 			return m, tea.Quit
 
 		case tea.KeyCtrlC, tea.KeyEsc:
@@ -81,6 +92,15 @@ func (m model) View() string {
 	if m.mode != "username" {
 		title = "password"
 	}
+
+	var screenTitle string
+
+	if m.loggedErr != "" {
+		screenTitle = fmt.Sprintf(" - %s", m.loggedErr)
+	}
+
+	title += screenTitle
+
 	return fmt.Sprintf(
 		"%s\n\n%s\n\n%s",
 		title,
