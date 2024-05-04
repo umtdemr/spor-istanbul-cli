@@ -1,28 +1,31 @@
 package client
 
 import (
-	"net/http"
+	"github.com/umtdemr/spor-istanbul-cli/internal/parser"
 	"net/url"
+	"strings"
 )
 
-func Login(id string, password string) (string, bool) {
+func (c *Client) Login(id string, password string) bool {
 	formData := url.Values{}
 	formData.Set("txtTCPasaport", id)
 	formData.Set("txtSifre", password)
 	formData.Set("btnGirisYap", "Giriş Yap")
+	formData.Set("__VIEWSTATE", "18v9/jvlC8qsN16XpBUmSb1Pq4Qp4X0pMErF1AMS0Kw/METmb6YGeh04udRG+fyrUGWFjPMGPETZp7235nCmqmDNRkAlboNzDmgy7etyxJcHXpwBY1+pxMTfnOTlOsz/")
 
-	resp, _ := http.PostForm(LOGIN_URL, formData)
+	resp, _ := c.HttpClient.PostForm(c.BaseURL+LOGIN_URL, formData)
 
 	defer resp.Body.Close()
 
-	cookies := resp.Cookies()
-	var sessionId string
+	pageTitle, ok := parser.GetTitle(resp.Body)
 
-	for _, cookie := range cookies {
-		if cookie.Name == COOKIE_SESSION_ID {
-			sessionId = cookie.Value
-		}
+	if !ok {
+		return false
 	}
 
-	return sessionId, sessionId != ""
+	if strings.Contains(pageTitle, "Giriş Yap") {
+		return false
+	}
+
+	return true
 }
