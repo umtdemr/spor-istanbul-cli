@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/umtdemr/spor-istanbul-cli/internal/client"
 	"log"
 )
 
@@ -63,13 +62,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.password = m.textInput.Value()
 
-			sessionId, loggedIn := client.Login(m.username, m.password)
-
-			if !loggedIn {
-				m.loggedErr = "please try again"
-			} else {
-				m.loggedErr = sessionId
-			}
+			//sessionId, loggedIn := client.Login(m.username, m.password)
+			//
+			//if !loggedIn {
+			//	m.loggedErr = "please try again"
+			//} else {
+			//	m.loggedErr = sessionId
+			//}
 
 			return m, tea.Quit
 
