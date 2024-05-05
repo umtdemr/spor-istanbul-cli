@@ -1,12 +1,12 @@
 package client
 
 import (
-	"github.com/umtdemr/spor-istanbul-cli/internal/parser"
+	"bytes"
+	"io"
 	"net/url"
-	"strings"
 )
 
-func (c *Client) Login(id string, password string) bool {
+func (c *Client) Login(id string, password string) *bytes.Buffer {
 	formData := url.Values{}
 	formData.Set("txtTCPasaport", id)
 	formData.Set("txtSifre", password)
@@ -17,15 +17,13 @@ func (c *Client) Login(id string, password string) bool {
 
 	defer resp.Body.Close()
 
-	pageTitle, ok := parser.GetTitle(resp.Body)
+	buffer := bytes.NewBuffer(nil)
 
-	if !ok {
-		return false
+	_, err := io.Copy(buffer, resp.Body)
+
+	if err != nil {
+		panic("error while copying the bufer")
 	}
 
-	if strings.Contains(pageTitle, "Giriş Yap") {
-		return false
-	}
-
-	return true
+	return buffer
 }
