@@ -3,6 +3,7 @@ package service
 import (
 	"github.com/umtdemr/spor-istanbul-cli/internal/client"
 	"github.com/umtdemr/spor-istanbul-cli/internal/parser"
+	"github.com/umtdemr/spor-istanbul-cli/internal/session"
 	"strings"
 )
 
@@ -30,7 +31,7 @@ func (s *Service) Login(id string, password string) bool {
 
 }
 
-func (s *Service) GetSubscriptions() {
+func (s *Service) GetSubscriptions() []*session.Subscription {
 	body := s.client.GetSubscriptionsPage()
-	s.parser.GetSubscriptions(body)
+	return s.parser.GetSubscriptions(body)
 }

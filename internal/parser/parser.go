@@ -1,8 +1,8 @@
 package parser
 
 import (
-	"fmt"
 	"github.com/PuerkitoBio/goquery"
+	"github.com/umtdemr/spor-istanbul-cli/internal/session"
 	"golang.org/x/net/html"
 	"io"
 )
@@ -42,10 +42,28 @@ func (p *Parser) GetTitle(r io.Reader) (string, bool) {
 	return traverse(doc)
 }
 
-func (p *Parser) GetSubscriptions(r io.Reader) {
+func (p *Parser) GetSubscriptions(r io.Reader) []*session.Subscription {
 	doc, _ := goquery.NewDocumentFromReader(r)
 
-	doc.Find("#dtUyeSpor tr").Each(func(index int, d *goquery.Selection) {
-		fmt.Println(index)
+	var subscriptions []*session.Subscription
+
+	doc.Find("#dtUyeSpor tr").Each(func(index int, row *goquery.Selection) {
+		// ignore header of the table
+		if index == 0 {
+			return
+		}
+
+		// there should be a select session button.
+		if row.Find("a").Length() < 2 {
+			return
+		}
+
+		subscriptions = append(subscriptions, &session.Subscription{
+			Name:      row.Find("td").Get(2).FirstChild.Data,
+			Date:      row.Find("td").Get(3).FirstChild.Data,
+			Remaining: row.Find("td").Get(5).FirstChild.Data,
+		})
 	})
+
+	return subscriptions
 }
