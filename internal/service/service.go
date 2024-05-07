@@ -35,3 +35,7 @@ func (s *Service) GetSubscriptions() []*session.Subscription {
 	body := s.client.GetSubscriptionsPage()
 	return s.parser.GetSubscriptions(body)
 }
+
+func (s *Service) GetSessions(postRequestId string) {
+	s.client.GetSessions(postRequestId)
+}

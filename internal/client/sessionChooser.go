@@ -4,10 +4,23 @@ import (
 	"bytes"
 	"io"
 	"net/http"
+	"net/url"
 )
 
-func (c *Client) ChooseSession() {
+func (c *Client) GetSessions(sessionPostId string) *bytes.Buffer {
+	formData := url.Values{}
+	formData.Set("__EVENTTARGET", sessionPostId)
 
+	resp, _ := c.HttpClient.PostForm(c.BaseURL+"/uyespor", formData)
+
+	defer resp.Body.Close()
+
+	buffer := bytes.NewBuffer(nil)
+	_, err := io.Copy(buffer, resp.Body)
+	if err != nil {
+		panic("error while copying the buffer")
+	}
+	return buffer
 }
 
 func (c *Client) GetSubscriptionsPage() *bytes.Buffer {
