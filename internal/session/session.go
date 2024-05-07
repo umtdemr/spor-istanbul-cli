@@ -9,7 +9,8 @@ type Session struct {
 }
 
 type Subscription struct {
-	Name      string
-	Remaining string
-	Date      string
+	Name          string
+	Remaining     string
+	Date          string
+	PostRequestId string
 }
