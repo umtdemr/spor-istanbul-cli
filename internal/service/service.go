@@ -36,6 +36,7 @@ func (s *Service) GetSubscriptions() []*session.Subscription {
 	return s.parser.GetSubscriptions(body)
 }
 
-func (s *Service) GetSessions(postRequestId string) {
-	s.client.GetSessions(postRequestId)
+func (s *Service) GetSessions(postRequestId string) []*session.Collection {
+	body := s.client.GetSessions(postRequestId)
+	return s.parser.ParseSessionsDoc(body)
 }
