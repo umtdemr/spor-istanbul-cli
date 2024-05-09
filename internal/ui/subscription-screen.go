@@ -7,20 +7,16 @@ import (
 	"strings"
 )
 
-func GenerateSubscriptionListScreen() string {
+func GenerateSubscriptionListScreen(subscriptions []*session.Subscription) string {
 	var selectedSubscription int = 0
 
 	doc := strings.Builder{}
 
-	sub1 := session.Subscription{
-		Name:      "HAMZA YERLİKAYA SPOR KOMPLEKSİ FİTNESS TÜM GÜN (07:00 22:00) 18 KONTÖR",
-		Date:      "15.04.2024 - 14.06.2024",
-		Remaining: "9",
-	}
+	rows := make([][]string, len(subscriptions))
 
-	rows := [][]string{
-		{sub1.Name, sub1.Date, sub1.Remaining},
-		{sub1.Name, sub1.Date, sub1.Remaining},
+	for i, subscription := range subscriptions {
+		thisRow := []string{subscription.Name, subscription.Date, subscription.Remaining}
+		rows[i] = thisRow
 	}
 
 	subscriptionTable := table.New().Border(lipgloss.RoundedBorder()).
