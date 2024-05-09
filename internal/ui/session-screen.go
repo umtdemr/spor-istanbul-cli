@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/umtdemr/spor-istanbul-cli/internal/session"
 	"golang.org/x/term"
@@ -18,18 +19,18 @@ var (
 	subtle = lipgloss.AdaptiveColor{Light: "#D9DCCF", Dark: "#383838"}
 
 	dialogBoxStyle = lipgloss.NewStyle().
-			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color("#874BFD")).
-			Padding(1, 0).
-			BorderTop(true).
-			BorderLeft(true).
-			BorderRight(true).
-			BorderBottom(true)
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(lipgloss.Color("#874BFD")).
+		Padding(1, 0).
+		BorderTop(true).
+		BorderLeft(true).
+		BorderRight(true).
+		BorderBottom(true)
 
 	docStyle = lipgloss.NewStyle().Padding(1, 2, 1, 2)
 )
 
-func GenerateSessionScreen() string {
+func GenerateSessionScreen(collections []*session.Collection) string {
 	physicalWidth, _, _ := term.GetSize(int(os.Stdout.Fd()))
 	doc := strings.Builder{}
 
@@ -46,99 +47,38 @@ func GenerateSessionScreen() string {
 		doc.WriteString(dialog + "\n\n")
 	}
 
-	sessionsFirst := []session.Session{
-		{
-			Day:       "Saturday",
-			Date:      "03.05.2024",
-			Available: 0,
-			Limit:     300,
-			Time:      "08:00 - 16:30",
-		},
-		{
-			Day:       "Saturday",
-			Date:      "03.05.2024",
-			Available: 1,
-			Limit:     240,
-			Time:      "17:00 - 21:00",
-		},
-	}
-
-	sessionsSecond := []session.Session{
-		{
-			Day:       "Saturday",
-			Date:      "03.05.2024",
-			Available: 1,
-			Limit:     300,
-			Time:      "08:00 - 16:30",
-		},
-		{
-			Day:       "Saturday",
-			Date:      "03.05.2024",
-			Available: 0,
-			Limit:     240,
-			Time:      "17:00 - 21:00",
-		},
-	}
-
-	sessionsThird := []session.Session{
-		{
-			Day:       "Saturday",
-			Date:      "03.05.2024",
-			Available: 1,
-			Limit:     300,
-			Time:      "08:00 - 16:30",
-		},
-		{
-			Day:       "Saturday",
-			Date:      "03.05.2024",
-			Available: 1,
-			Limit:     240,
-			Time:      "17:00 - 21:00",
-		},
-	}
-	sessionsLast := []session.Session{
-		{
-			Day:       "Saturday",
-			Date:      "03.05.2024",
-			Available: 0,
-			Limit:     300,
-			Time:      "08:00 - 16:30",
-		},
-		{
-			Day:       "Saturday",
-			Date:      "03.05.2024",
-			Available: 0,
-			Limit:     240,
-			Time:      "17:00 - 21:00",
-		},
-	}
-
-	allSessions := [][]session.Session{
-		sessionsFirst,
-		sessionsSecond,
-		sessionsThird,
-		sessionsLast,
-	}
-	sessionRenderer := lipgloss.NewStyle().Height(10).Width(20).Border(lipgloss.RoundedBorder(), true).MarginRight(1)
+	sessionRenderer := lipgloss.NewStyle().PaddingTop(2).PaddingBottom(2).Width(20).Border(lipgloss.RoundedBorder(), true).MarginRight(1)
 	sessionTitle := lipgloss.NewStyle().AlignHorizontal(lipgloss.Center).Width(20)
+	panel := lipgloss.NewStyle().AlignHorizontal(lipgloss.Center).Width(20)
 	var renderedSessionColumns []string
-	for _, sessionList := range allSessions {
-		var renderedSessionRows []string
-		for _, singleSession := range sessionList {
+	for _, sessionList := range collections {
+		renderedPanelStr := lipgloss.JoinVertical(
+			lipgloss.Top,
+			panel.Render(sessionList.Day),
+			panel.Render("03.05.2024"),
+		)
+		renderedSessionRows := []string{renderedPanelStr}
+		for _, singleSession := range sessionList.Sessions {
 			sessionTitle.MarginTop(0)
 
-			if singleSession.Available > 0 {
+			if singleSession.Applicable {
 				sessionRenderer.BorderForeground(lipgloss.Color("#00ff00"))
 			} else {
 				sessionRenderer.BorderForeground(lipgloss.Color("#ff0000"))
 			}
+			
+			applicableText := "Yer Var"
+			if !singleSession.Applicable {
+				applicableText = "Dolu"
+			}
 
 			details := lipgloss.JoinVertical(
 				lipgloss.Top,
-				sessionTitle.Render(singleSession.Day),
-				sessionTitle.Render("03.05.2024"),
-				sessionTitle.MarginTop(1).Render("239 / 240"),
-				sessionTitle.Render("Year Var"),
+				sessionTitle.Render(
+					fmt.Sprintf("%s / %s", singleSession.Available, singleSession.Limit),
+				),
+				sessionTitle.MarginTop(1).Render(singleSession.Time),
+				sessionTitle.MarginTop(1).Render(applicableText),
 			)
 			renderedSessionRows = append(renderedSessionRows, sessionRenderer.Render(details))
 		}
