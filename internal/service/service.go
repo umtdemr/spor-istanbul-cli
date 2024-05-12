@@ -40,3 +40,17 @@ func (s *Service) GetSessions(postRequestId string) []*session.Collection {
 	body := s.client.GetSessions(postRequestId)
 	return s.parser.ParseSessionsDoc(body)
 }
+
+func (s *Service) CheckSessionApplicable(postRequestId string, sessionId string) bool {
+	sessions := s.GetSessions(postRequestId)
+
+	for _, collection := range sessions {
+		for _, singleSession := range collection.Sessions {
+			if singleSession.Id == sessionId && singleSession.Applicable {
+				return true
+			}
+		}
+	}
+
+	return false
+}

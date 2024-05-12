@@ -138,12 +138,17 @@ func (p *Parser) ParseSessionsDoc(r io.Reader) []*session.Collection {
 
 		// get the sessions for this collection
 		panelNode.Find(".panel-body .well").Each(func(sessionGroupIdx int, sessionNode *goquery.Selection) {
+			sessionId, ok := sessionNode.Attr("id")
+			if !ok {
+				return
+			}
 			input := sessionNode.Find("input[type='checkbox']")
 
 			sessionCollection.Sessions = append(sessionCollection.Sessions, &session.Session{
 				Limit:      strings.TrimSpace(sessionNode.Find(".label-primary").Text()),
 				Available:  strings.TrimSpace(sessionNode.Find(".label-danger").Text()),
 				Time:       strings.TrimSpace(sessionNode.Find("span[id*='lblSeansSaat']").Text()),
+				Id:         sessionId,
 				Applicable: input.Length() > 0,
 			})
 		})

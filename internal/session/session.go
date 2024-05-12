@@ -10,6 +10,7 @@ type Session struct {
 	Available  string
 	Limit      string
 	Time       string
+	Id         string
 	Applicable bool
 }
 
