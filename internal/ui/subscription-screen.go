@@ -51,25 +51,42 @@ func (m SubscriptionModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case []*session.Subscription:
 		m.subscriptions = msg
 		m.loading = false
+		m.selectedSubscription = 0
 		return m, nil
 	case error:
 		m.err = msg
 		m.loading = false
 		return m, nil
-	default:
-		return m, nil
+	case tea.KeyMsg:
+		switch msg.Type {
+		case tea.KeyUp:
+			if m.selectedSubscription >= 1 {
+				m.selectedSubscription -= 1
+			} else {
+				m.selectedSubscription = len(m.subscriptions) - 1
+			}
+			return m, nil
+		case tea.KeyDown:
+			if m.selectedSubscription < len(m.subscriptions)-1 {
+				m.selectedSubscription += 1
+			} else {
+				m.selectedSubscription = 0
+			}
+			return m, nil
+		}
+
 	}
+	return m, nil
 }
 
 func (m SubscriptionModel) View() string {
 	if m.loading {
 		return "loading...."
 	}
-	return GenerateSubscriptionListScreen(m.subscriptions)
+	return m.GenerateSubscriptionListScreen(m.subscriptions)
 }
 
-func GenerateSubscriptionListScreen(subscriptions []*session.Subscription) string {
-	var selectedSubscription int = 0
+func (m SubscriptionModel) GenerateSubscriptionListScreen(subscriptions []*session.Subscription) string {
 
 	doc := strings.Builder{}
 
@@ -91,7 +108,7 @@ func GenerateSubscriptionListScreen(subscriptions []*session.Subscription) strin
 			}
 			style = style.AlignHorizontal(lipgloss.Center).Padding(1)
 
-			if row-1 == selectedSubscription {
+			if row-1 == m.selectedSubscription {
 				style = style.Background(lipgloss.Color("#7239EA")).Foreground(lipgloss.Color("#fff"))
 			}
 
