@@ -36,14 +36,17 @@ type SessionModel struct {
 	api                    *service.Service
 	collections            []*session.Collection
 	selectedSubscriptionId string
+	selectedSession        int
+	totalSessionLength     int
 	loading                bool
 	err                    error
 }
 
 func initialSessionModel(api *service.Service) SessionModel {
 	return SessionModel{
-		api:     api,
-		loading: true,
+		api:             api,
+		loading:         true,
+		selectedSession: -1,
 	}
 }
 
@@ -67,7 +70,34 @@ func (m SessionModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case []*session.Collection:
 		m.collections = msg
 		m.loading = false
+		m.selectedSession = 0
+
+		totalLength := 0
+
+		for _, collection := range msg {
+			totalLength += len(collection.Sessions)
+		}
+
+		m.totalSessionLength = totalLength
+
 		return m, nil
+	case tea.KeyMsg:
+		switch msg.Type {
+		case tea.KeyUp:
+			if m.selectedSession >= 1 {
+				m.selectedSession -= 1
+			} else {
+				m.selectedSession = m.totalSessionLength - 1
+			}
+			return m, nil
+		case tea.KeyDown:
+			if m.selectedSession < m.totalSessionLength-1 {
+				m.selectedSession += 1
+			} else {
+				m.selectedSession = 0
+			}
+			return m, nil
+		}
 	}
 	return m, nil
 }
@@ -96,11 +126,10 @@ func (m SessionModel) GenerateSessionScreen(collections []*session.Collection) s
 		doc.WriteString(dialog + "\n\n")
 	}
 
-	sessionRenderer := lipgloss.NewStyle().PaddingTop(2).PaddingBottom(2).Width(20).Border(lipgloss.RoundedBorder(), true).MarginRight(1)
-	sessionTitle := lipgloss.NewStyle().AlignHorizontal(lipgloss.Center).Width(20)
-	panel := lipgloss.NewStyle().AlignHorizontal(lipgloss.Center).Width(20)
 	var renderedSessionColumns []string
+	currentSession := 0
 	for _, sessionList := range collections {
+		panel := lipgloss.NewStyle().AlignHorizontal(lipgloss.Center).Width(20)
 		renderedPanelStr := lipgloss.JoinVertical(
 			lipgloss.Top,
 			panel.Render(sessionList.Day),
@@ -108,12 +137,17 @@ func (m SessionModel) GenerateSessionScreen(collections []*session.Collection) s
 		)
 		renderedSessionRows := []string{renderedPanelStr}
 		for _, singleSession := range sessionList.Sessions {
-			sessionTitle.MarginTop(0)
-
+			sessionTitle := lipgloss.NewStyle().AlignHorizontal(lipgloss.Center).Width(20)
+			sessionRenderer := lipgloss.NewStyle().PaddingTop(2).PaddingBottom(2).Width(20).Border(lipgloss.RoundedBorder(), true).MarginRight(1)
 			if singleSession.Applicable {
 				sessionRenderer.BorderForeground(lipgloss.Color("#00ff00"))
 			} else {
 				sessionRenderer.BorderForeground(lipgloss.Color("#ff0000"))
+			}
+
+			if currentSession == m.selectedSession {
+				sessionRenderer.Background(lipgloss.Color("#7239EA"))
+				sessionRenderer.Foreground(lipgloss.Color("#FFF"))
 			}
 
 			applicableText := "Yer Var"
@@ -130,6 +164,7 @@ func (m SessionModel) GenerateSessionScreen(collections []*session.Collection) s
 				sessionTitle.MarginTop(1).Render(applicableText),
 			)
 			renderedSessionRows = append(renderedSessionRows, sessionRenderer.Render(details))
+			currentSession++
 		}
 
 		renderedSessionColumns = append(
