@@ -4,48 +4,44 @@ import (
 	"fmt"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	"log"
+	"github.com/umtdemr/spor-istanbul-cli/internal/service"
 )
-
-func LoginScreen() {
-	p := tea.NewProgram(initialModel())
-	if _, err := p.Run(); err != nil {
-		log.Fatal(err)
-	}
-}
 
 type (
 	errMsg error
 )
 
-type model struct {
+type AuthModel struct {
+	api       *service.Service
 	textInput textinput.Model
 	username  string
 	password  string
 	mode      string
 	loggedErr string
+	loading   bool
 	err       error
 }
 
-func initialModel() model {
+func initialAuthModel(api *service.Service) AuthModel {
 	ti := textinput.New()
 	ti.Placeholder = "username"
 	ti.Focus()
 	ti.CharLimit = 156
 	ti.Width = 20
 
-	return model{
+	return AuthModel{
+		api:       api,
 		textInput: ti,
 		err:       nil,
 		mode:      "username",
 	}
 }
 
-func (m model) Init() tea.Cmd {
+func (m AuthModel) Init() tea.Cmd {
 	return textinput.Blink
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m AuthModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
@@ -62,18 +58,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.password = m.textInput.Value()
 
-			//sessionId, loggedIn := client.Login(m.username, m.password)
-			//
-			//if !loggedIn {
-			//	m.loggedErr = "please try again"
-			//} else {
-			//	m.loggedErr = sessionId
-			//}
+			isLoggedIn := m.api.Login(m.username, m.password)
 
-			return m, tea.Quit
+			if !isLoggedIn {
+				m.loggedErr = "try again"
+				m.textInput.Reset()
+				m.mode = "username"
+				return m, nil
+			}
 
-		case tea.KeyCtrlC, tea.KeyEsc:
-			return m, tea.Quit
+			return m, screenDone
 		}
 
 	// We handle errors just like any other message
@@ -86,7 +80,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) View() string {
+func (m AuthModel) View() string {
 	title := "username"
 	if m.mode != "username" {
 		title = "password"
@@ -101,9 +95,8 @@ func (m model) View() string {
 	title += screenTitle
 
 	return fmt.Sprintf(
-		"%s\n\n%s\n\n%s",
+		"%s\n\n%s",
 		title,
 		m.textInput.View(),
-		"(esc to quit)",
 	) + "\n"
 }
