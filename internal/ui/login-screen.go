@@ -61,9 +61,11 @@ func (m AuthModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			isLoggedIn := m.api.Login(m.username, m.password)
 
 			if !isLoggedIn {
+				m.textInput.SetValue("")
 				m.loggedErr = "try again"
-				m.textInput.Reset()
 				m.mode = "username"
+				m.textInput.EchoMode = textinput.EchoNormal
+				m.textInput.Placeholder = "username"
 				return m, nil
 			}
 
