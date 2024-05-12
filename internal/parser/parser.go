@@ -6,6 +6,7 @@ import (
 	"golang.org/x/net/html"
 	"io"
 	"regexp"
+	"strings"
 )
 
 type Parser struct {
@@ -92,4 +93,73 @@ func (p *Parser) GetSubscriptions(r io.Reader) []*session.Subscription {
 	})
 
 	return subscriptions
+}
+
+func (p *Parser) ParseSessionsDoc(r io.Reader) []*session.Collection {
+	doc, _ := goquery.NewDocumentFromReader(r)
+
+	var sessionCollections []*session.Collection
+
+	// find all the panels
+	sessionQuery := doc.Find("#dvScheduler > div")
+
+	sessionQuery.Each(func(index int, panelNode *goquery.Selection) {
+		if index == sessionQuery.Length()-1 {
+			return
+		}
+
+		// get the panel heading
+		heading := strings.TrimSpace(
+			strings.ReplaceAll(
+				strings.Replace(
+					panelNode.Find(".panel-heading").Text(),
+					"\n",
+					"",
+					2,
+				),
+				" ",
+				"",
+			),
+		)
+
+		// since the format is DAY\nDATE, we need to split it
+		headingParts := strings.Split(heading, "\n")
+
+		if len(headingParts) != 2 {
+			return
+		}
+
+		// create the collection
+		sessionCollection := &session.Collection{
+			Day:      headingParts[0],
+			Date:     headingParts[1],
+			Sessions: []*session.Session{},
+		}
+
+		// get the sessions for this collection
+		panelNode.Find(".panel-body .well").Each(func(sessionGroupIdx int, sessionNode *goquery.Selection) {
+			sessionId, ok := sessionNode.Attr("id")
+			if !ok {
+				return
+			}
+			input := sessionNode.Find("input[type='checkbox']")
+
+			sessionCollection.Sessions = append(sessionCollection.Sessions, &session.Session{
+				Limit:      strings.TrimSpace(sessionNode.Find(".label-primary").Text()),
+				Available:  strings.TrimSpace(sessionNode.Find(".label-danger").Text()),
+				Time:       strings.TrimSpace(sessionNode.Find("span[id*='lblSeansSaat']").Text()),
+				Id:         sessionId,
+				Applicable: input.Length() > 0,
+			})
+		})
+
+		// do not add if there is no session
+		if len(sessionCollection.Sessions) == 0 {
+			return
+		}
+
+		sessionCollections = append(sessionCollections, sessionCollection)
+	})
+
+	return sessionCollections
 }

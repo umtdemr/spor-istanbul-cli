@@ -36,6 +36,21 @@ func (s *Service) GetSubscriptions() []*session.Subscription {
 	return s.parser.GetSubscriptions(body)
 }
 
-func (s *Service) GetSessions(postRequestId string) {
-	s.client.GetSessions(postRequestId)
+func (s *Service) GetSessions(postRequestId string) []*session.Collection {
+	body := s.client.GetSessions(postRequestId)
+	return s.parser.ParseSessionsDoc(body)
+}
+
+func (s *Service) CheckSessionApplicable(postRequestId string, sessionId string) bool {
+	sessions := s.GetSessions(postRequestId)
+
+	for _, collection := range sessions {
+		for _, singleSession := range collection.Sessions {
+			if singleSession.Id == sessionId && singleSession.Applicable {
+				return true
+			}
+		}
+	}
+
+	return false
 }

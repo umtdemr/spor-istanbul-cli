@@ -1,7 +1,10 @@
 package ui
 
 import (
+	"fmt"
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/umtdemr/spor-istanbul-cli/internal/service"
 	"github.com/umtdemr/spor-istanbul-cli/internal/session"
 	"golang.org/x/term"
 	"os"
@@ -29,7 +32,86 @@ var (
 	docStyle = lipgloss.NewStyle().Padding(1, 2, 1, 2)
 )
 
-func GenerateSessionScreen() string {
+type SessionModel struct {
+	api                    *service.Service
+	collections            []*session.Collection
+	selectedSubscriptionId string
+	selectedSession        int
+	totalSessionLength     int
+	loading                bool
+	err                    error
+}
+
+func initialSessionModel(api *service.Service) SessionModel {
+	return SessionModel{
+		api:             api,
+		loading:         true,
+		selectedSession: -1,
+	}
+}
+
+func (m SessionModel) callSessionsApiCmd() tea.Cmd {
+	return func() tea.Msg {
+		collections := m.api.GetSessions(m.selectedSubscriptionId)
+		return collections
+	}
+}
+
+func (m SessionModel) Init() tea.Cmd {
+	return nil
+}
+
+func (m SessionModel) InitSessions() tea.Cmd {
+	return m.callSessionsApiCmd()
+}
+
+func (m SessionModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case []*session.Collection:
+		m.collections = msg
+		m.loading = false
+		m.selectedSession = 0
+
+		totalLength := 0
+
+		for _, collection := range msg {
+			totalLength += len(collection.Sessions)
+		}
+
+		m.totalSessionLength = totalLength
+
+		return m, nil
+	case tea.KeyMsg:
+		switch msg.Type {
+		case tea.KeyUp:
+			if m.selectedSession >= 1 {
+				m.selectedSession -= 1
+			} else {
+				m.selectedSession = m.totalSessionLength - 1
+			}
+			return m, nil
+		case tea.KeyDown:
+			if m.selectedSession < m.totalSessionLength-1 {
+				m.selectedSession += 1
+			} else {
+				m.selectedSession = 0
+			}
+			return m, nil
+		case tea.KeyEnter:
+			return m, screenDone
+		}
+	}
+	return m, nil
+}
+
+func (m SessionModel) View() string {
+	if m.loading {
+		return "loading"
+	}
+	return m.GenerateSessionScreen(m.collections)
+}
+
+func (m SessionModel) GenerateSessionScreen(collections []*session.Collection) string {
 	physicalWidth, _, _ := term.GetSize(int(os.Stdout.Fd()))
 	doc := strings.Builder{}
 
@@ -46,101 +128,45 @@ func GenerateSessionScreen() string {
 		doc.WriteString(dialog + "\n\n")
 	}
 
-	sessionsFirst := []session.Session{
-		{
-			Day:       "Saturday",
-			Date:      "03.05.2024",
-			Available: 0,
-			Limit:     300,
-			Time:      "08:00 - 16:30",
-		},
-		{
-			Day:       "Saturday",
-			Date:      "03.05.2024",
-			Available: 1,
-			Limit:     240,
-			Time:      "17:00 - 21:00",
-		},
-	}
-
-	sessionsSecond := []session.Session{
-		{
-			Day:       "Saturday",
-			Date:      "03.05.2024",
-			Available: 1,
-			Limit:     300,
-			Time:      "08:00 - 16:30",
-		},
-		{
-			Day:       "Saturday",
-			Date:      "03.05.2024",
-			Available: 0,
-			Limit:     240,
-			Time:      "17:00 - 21:00",
-		},
-	}
-
-	sessionsThird := []session.Session{
-		{
-			Day:       "Saturday",
-			Date:      "03.05.2024",
-			Available: 1,
-			Limit:     300,
-			Time:      "08:00 - 16:30",
-		},
-		{
-			Day:       "Saturday",
-			Date:      "03.05.2024",
-			Available: 1,
-			Limit:     240,
-			Time:      "17:00 - 21:00",
-		},
-	}
-	sessionsLast := []session.Session{
-		{
-			Day:       "Saturday",
-			Date:      "03.05.2024",
-			Available: 0,
-			Limit:     300,
-			Time:      "08:00 - 16:30",
-		},
-		{
-			Day:       "Saturday",
-			Date:      "03.05.2024",
-			Available: 0,
-			Limit:     240,
-			Time:      "17:00 - 21:00",
-		},
-	}
-
-	allSessions := [][]session.Session{
-		sessionsFirst,
-		sessionsSecond,
-		sessionsThird,
-		sessionsLast,
-	}
-	sessionRenderer := lipgloss.NewStyle().Height(10).Width(20).Border(lipgloss.RoundedBorder(), true).MarginRight(1)
-	sessionTitle := lipgloss.NewStyle().AlignHorizontal(lipgloss.Center).Width(20)
 	var renderedSessionColumns []string
-	for _, sessionList := range allSessions {
-		var renderedSessionRows []string
-		for _, singleSession := range sessionList {
-			sessionTitle.MarginTop(0)
-
-			if singleSession.Available > 0 {
+	currentSession := 0
+	for _, sessionList := range collections {
+		panel := lipgloss.NewStyle().AlignHorizontal(lipgloss.Center).Width(20)
+		renderedPanelStr := lipgloss.JoinVertical(
+			lipgloss.Top,
+			panel.Render(sessionList.Day),
+			panel.Render("03.05.2024"),
+		)
+		renderedSessionRows := []string{renderedPanelStr}
+		for _, singleSession := range sessionList.Sessions {
+			sessionTitle := lipgloss.NewStyle().AlignHorizontal(lipgloss.Center).Width(20)
+			sessionRenderer := lipgloss.NewStyle().PaddingTop(2).PaddingBottom(2).Width(20).Border(lipgloss.RoundedBorder(), true).MarginRight(1)
+			if singleSession.Applicable {
 				sessionRenderer.BorderForeground(lipgloss.Color("#00ff00"))
 			} else {
 				sessionRenderer.BorderForeground(lipgloss.Color("#ff0000"))
 			}
 
+			if currentSession == m.selectedSession {
+				sessionRenderer.Background(lipgloss.Color("#7239EA"))
+				sessionRenderer.Foreground(lipgloss.Color("#FFF"))
+			}
+
+			applicableText := "Yer Var"
+			if !singleSession.Applicable {
+				applicableText = "Dolu"
+			}
+
 			details := lipgloss.JoinVertical(
 				lipgloss.Top,
-				sessionTitle.Render(singleSession.Day),
-				sessionTitle.Render("03.05.2024"),
-				sessionTitle.MarginTop(1).Render("239 / 240"),
-				sessionTitle.Render("Year Var"),
+				sessionTitle.Render(
+					fmt.Sprintf("%s / %s", singleSession.Available, singleSession.Limit),
+				),
+				sessionTitle.MarginTop(1).Render(singleSession.Time),
+				sessionTitle.MarginTop(1).Render(applicableText),
 			)
 			renderedSessionRows = append(renderedSessionRows, sessionRenderer.Render(details))
+			currentSession++
 		}
 
 		renderedSessionColumns = append(

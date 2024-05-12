@@ -1,11 +1,17 @@
 package session
 
+type Collection struct {
+	Day      string
+	Date     string
+	Sessions []*Session
+}
+
 type Session struct {
-	Day       string
-	Date      string
-	Available int
-	Limit     int
-	Time      string
+	Available  string
+	Limit      string
+	Time       string
+	Id         string
+	Applicable bool
 }
 
 type Subscription struct {
@@ -13,4 +19,11 @@ type Subscription struct {
 	Remaining     string
 	Date          string
 	PostRequestId string
+}
+
+type SelectedSession struct {
+	Day  string
+	Date string
+	Time string
+	Id   string
 }
