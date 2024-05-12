@@ -49,17 +49,24 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, m.subscriptionModel.InitSubscriptions()
 		case subscriptionScreen:
 			m.currentScreen = sessionScreen
-			m.sessionScreenModel.selectedSubscriptionId = m.
+			selectedSubscriptionId := m.
 				subscriptionModel.
 				subscriptions[m.subscriptionModel.selectedSubscription].
 				PostRequestId
+
+			m.sessionScreenModel.selectedSubscriptionId = selectedSubscriptionId
+			m.alarmScreenModel.selectedSubscriptionId = selectedSubscriptionId
 			return m, m.sessionScreenModel.InitSessions()
 		case sessionScreen:
 			m.currentScreen = alarmScreen
 
 			current := 0
 
+			found := false
 			for _, collection := range m.sessionScreenModel.collections {
+				if found {
+					break
+				}
 				for _, singleSession := range collection.Sessions {
 					if current == m.sessionScreenModel.selectedSession {
 						m.alarmScreenModel.selectedSession = &session.SelectedSession{
@@ -68,13 +75,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							Time: singleSession.Time,
 							Id:   singleSession.Id,
 						}
+						found = true
 						break
 					}
 					current++
 				}
 			}
 
-			return m, nil
+			return m, m.alarmScreenModel.InitAlarm()
 		}
 	}
 	switch m.currentScreen {
