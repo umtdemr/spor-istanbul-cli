@@ -135,7 +135,7 @@ func (m SessionModel) GenerateSessionScreen(collections []*session.Collection) s
 		renderedPanelStr := lipgloss.JoinVertical(
 			lipgloss.Top,
 			panel.Render(sessionList.Day),
-			panel.Render("03.05.2024"),
+			panel.Render(sessionList.Date),
 		)
 		renderedSessionRows := []string{renderedPanelStr}
 		for _, singleSession := range sessionList.Sessions {
