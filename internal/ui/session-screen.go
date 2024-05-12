@@ -2,7 +2,9 @@ package ui
 
 import (
 	"fmt"
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/umtdemr/spor-istanbul-cli/internal/service"
 	"github.com/umtdemr/spor-istanbul-cli/internal/session"
 	"golang.org/x/term"
 	"os"
@@ -19,18 +21,65 @@ var (
 	subtle = lipgloss.AdaptiveColor{Light: "#D9DCCF", Dark: "#383838"}
 
 	dialogBoxStyle = lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(lipgloss.Color("#874BFD")).
-		Padding(1, 0).
-		BorderTop(true).
-		BorderLeft(true).
-		BorderRight(true).
-		BorderBottom(true)
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("#874BFD")).
+			Padding(1, 0).
+			BorderTop(true).
+			BorderLeft(true).
+			BorderRight(true).
+			BorderBottom(true)
 
 	docStyle = lipgloss.NewStyle().Padding(1, 2, 1, 2)
 )
 
-func GenerateSessionScreen(collections []*session.Collection) string {
+type SessionModel struct {
+	api                    *service.Service
+	collections            []*session.Collection
+	selectedSubscriptionId string
+	loading                bool
+	err                    error
+}
+
+func initialSessionModel(api *service.Service) SessionModel {
+	return SessionModel{
+		api:     api,
+		loading: true,
+	}
+}
+
+func (m SessionModel) callSessionsApiCmd() tea.Cmd {
+	return func() tea.Msg {
+		collections := m.api.GetSessions(m.selectedSubscriptionId)
+		return collections
+	}
+}
+
+func (m SessionModel) Init() tea.Cmd {
+	return nil
+}
+
+func (m SessionModel) InitSessions() tea.Cmd {
+	return m.callSessionsApiCmd()
+}
+
+func (m SessionModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case []*session.Collection:
+		m.collections = msg
+		m.loading = false
+		return m, nil
+	}
+	return m, nil
+}
+
+func (m SessionModel) View() string {
+	if m.loading {
+		return "loading"
+	}
+	return m.GenerateSessionScreen(m.collections)
+}
+
+func (m SessionModel) GenerateSessionScreen(collections []*session.Collection) string {
 	physicalWidth, _, _ := term.GetSize(int(os.Stdout.Fd()))
 	doc := strings.Builder{}
 
@@ -66,7 +115,7 @@ func GenerateSessionScreen(collections []*session.Collection) string {
 			} else {
 				sessionRenderer.BorderForeground(lipgloss.Color("#ff0000"))
 			}
-			
+
 			applicableText := "Yer Var"
 			if !singleSession.Applicable {
 				applicableText = "Dolu"

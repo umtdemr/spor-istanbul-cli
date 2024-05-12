@@ -73,6 +73,8 @@ func (m SubscriptionModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.selectedSubscription = 0
 			}
 			return m, nil
+		case tea.KeyEnter:
+			return m, screenDone
 		}
 
 	}

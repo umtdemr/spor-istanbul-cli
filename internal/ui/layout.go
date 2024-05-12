@@ -21,9 +21,10 @@ func screenDone() tea.Msg {
 }
 
 type model struct {
-	currentScreen     screen
-	authModel         AuthModel
-	subscriptionModel SubscriptionModel
+	currentScreen      screen
+	authModel          AuthModel
+	subscriptionModel  SubscriptionModel
+	sessionScreenModel SessionModel
 }
 
 func (m model) Init() tea.Cmd {
@@ -39,8 +40,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 	case screenDoneMsg:
-		m.currentScreen = subscriptionScreen
-		return m, m.subscriptionModel.InitSubscriptions()
+		switch m.currentScreen {
+		case authScreen:
+			m.currentScreen = subscriptionScreen
+			return m, m.subscriptionModel.InitSubscriptions()
+		case subscriptionScreen:
+			m.currentScreen = sessionScreen
+			m.sessionScreenModel.selectedSubscriptionId = m.
+				subscriptionModel.
+				subscriptions[m.subscriptionModel.selectedSubscription].
+				PostRequestId
+			return m, m.sessionScreenModel.InitSessions()
+		}
 	}
 	switch m.currentScreen {
 	case authScreen:
@@ -51,7 +62,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		newModel, cmd := m.subscriptionModel.Update(msg)
 		m.subscriptionModel = newModel.(SubscriptionModel)
 		return m, cmd
-
+	case sessionScreen:
+		newModel, cmd := m.sessionScreenModel.Update(msg)
+		m.sessionScreenModel = newModel.(SessionModel)
+		return m, cmd
 	}
 
 	return m, nil
@@ -63,6 +77,8 @@ func (m model) View() string {
 		return m.authModel.View()
 	case subscriptionScreen:
 		return m.subscriptionModel.View()
+	case sessionScreen:
+		return m.sessionScreenModel.View()
 	}
 	return ""
 }
@@ -70,9 +86,10 @@ func (m model) View() string {
 func StartApp() {
 	api := service.NewService()
 	p := tea.NewProgram(model{
-		currentScreen:     authScreen,
-		authModel:         initialAuthModel(api),
-		subscriptionModel: initialSubscriptionModel(api),
+		currentScreen:      authScreen,
+		authModel:          initialAuthModel(api),
+		subscriptionModel:  initialSubscriptionModel(api),
+		sessionScreenModel: initialSessionModel(api),
 	})
 	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
