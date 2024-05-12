@@ -3,6 +3,7 @@ package ui
 import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/umtdemr/spor-istanbul-cli/internal/service"
+	"github.com/umtdemr/spor-istanbul-cli/internal/session"
 	"log"
 )
 
@@ -12,6 +13,7 @@ const (
 	authScreen screen = iota
 	subscriptionScreen
 	sessionScreen
+	alarmScreen
 )
 
 type screenDoneMsg struct{}
@@ -25,6 +27,7 @@ type model struct {
 	authModel          AuthModel
 	subscriptionModel  SubscriptionModel
 	sessionScreenModel SessionModel
+	alarmScreenModel   AlarmModel
 }
 
 func (m model) Init() tea.Cmd {
@@ -51,6 +54,27 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				subscriptions[m.subscriptionModel.selectedSubscription].
 				PostRequestId
 			return m, m.sessionScreenModel.InitSessions()
+		case sessionScreen:
+			m.currentScreen = alarmScreen
+
+			current := 0
+
+			for _, collection := range m.sessionScreenModel.collections {
+				for _, singleSession := range collection.Sessions {
+					if current == m.sessionScreenModel.selectedSession {
+						m.alarmScreenModel.selectedSession = &session.SelectedSession{
+							Day:  collection.Day,
+							Date: collection.Date,
+							Time: singleSession.Time,
+							Id:   singleSession.Id,
+						}
+						break
+					}
+					current++
+				}
+			}
+
+			return m, nil
 		}
 	}
 	switch m.currentScreen {
@@ -66,6 +90,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		newModel, cmd := m.sessionScreenModel.Update(msg)
 		m.sessionScreenModel = newModel.(SessionModel)
 		return m, cmd
+	case alarmScreen:
+		newModel, cmd := m.alarmScreenModel.Update(msg)
+		m.alarmScreenModel = newModel.(AlarmModel)
+		return m, cmd
 	}
 
 	return m, nil
@@ -79,6 +107,8 @@ func (m model) View() string {
 		return m.subscriptionModel.View()
 	case sessionScreen:
 		return m.sessionScreenModel.View()
+	case alarmScreen:
+		return m.alarmScreenModel.View()
 	}
 	return ""
 }
@@ -90,6 +120,7 @@ func StartApp() {
 		authModel:          initialAuthModel(api),
 		subscriptionModel:  initialSubscriptionModel(api),
 		sessionScreenModel: initialSessionModel(api),
+		alarmScreenModel:   initialAlarmModel(api),
 	})
 	if _, err := p.Run(); err != nil {
 		log.Fatal(err)

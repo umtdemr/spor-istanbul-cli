@@ -97,6 +97,8 @@ func (m SessionModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.selectedSession = 0
 			}
 			return m, nil
+		case tea.KeyEnter:
+			return m, screenDone
 		}
 	}
 	return m, nil

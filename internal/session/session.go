@@ -20,3 +20,10 @@ type Subscription struct {
 	Date          string
 	PostRequestId string
 }
+
+type SelectedSession struct {
+	Day  string
+	Date string
+	Time string
+	Id   string
+}
