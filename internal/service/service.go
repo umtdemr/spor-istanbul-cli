@@ -19,6 +19,8 @@ func NewService() *Service {
 	}
 }
 
+// Login a wrapper method for login
+// After we get the response, we check the page title if the login is successful or not.
 func (s *Service) Login(id string, password string) bool {
 	body := s.client.Login(id, password)
 	title, ok := s.parser.GetTitle(body)
