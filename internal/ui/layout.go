@@ -37,8 +37,10 @@ var (
 			BorderBottom(true)
 )
 
+// screenDoneMsg is a type that tells Update method to change the screen
 type screenDoneMsg struct{}
 
+// screenDone returns screenDoneMsg
 func screenDone() tea.Msg {
 	return screenDoneMsg{}
 }
@@ -63,13 +65,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case tea.KeyCtrlC, tea.KeyEsc:
 			return m, tea.Quit
 		}
-	case screenDoneMsg:
+	case screenDoneMsg: // cmd to change the page
 		switch m.currentScreen {
 		case authScreen:
 			m.currentScreen = subscriptionScreen
 			return m, m.subscriptionModel.InitSubscriptions()
 		case subscriptionScreen:
 			m.currentScreen = sessionScreen
+			// set selected subscription for session model
 			selectedSubscriptionId := m.
 				subscriptionModel.
 				subscriptions[m.subscriptionModel.selectedSubscription].
@@ -83,6 +86,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			current := 0
 
+			// set selected session for alarm model
 			found := false
 			for _, collection := range m.sessionScreenModel.collections {
 				if found {
@@ -106,6 +110,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, m.alarmScreenModel.InitAlarm()
 		}
 	}
+
+	// otherwise, handle the cmd with the current screen's models
 	switch m.currentScreen {
 	case authScreen:
 		newModel, cmd := m.authModel.Update(msg)
@@ -128,7 +134,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+// View is the main layout for the CLI
 func (m model) View() string {
+	// get the current screen view
 	view := ""
 
 	switch m.currentScreen {
@@ -144,8 +152,10 @@ func (m model) View() string {
 
 	doc := strings.Builder{}
 
-	mainView := ContainerStyle.Width(terminalWidth - 2).Height(terminalHeight - 10).MaxHeight(terminalHeight).Render(view)
+	// render the screen in the container
+	mainView := ContainerStyle.Width(terminalWidth - 2).Height(terminalHeight - 4).MaxHeight(terminalHeight).Render(view)
 
+	// add footer
 	footer := lipgloss.NewStyle().
 		Width(terminalWidth - 2).
 		Align(lipgloss.Center)
@@ -156,6 +166,7 @@ func (m model) View() string {
 	return doc.String()
 }
 
+// StartApp starts the CLI application
 func StartApp() {
 	api := service.NewService()
 	p := tea.NewProgram(model{

@@ -6,6 +6,8 @@ import (
 	"net/url"
 )
 
+// Login sends a post request to log in
+// We don't need to save any data after a successful login since auth will be handled with client's sessions
 func (c *Client) Login(id string, password string) *bytes.Buffer {
 	formData := url.Values{}
 	formData.Set("txtTCPasaport", id)
@@ -21,6 +23,7 @@ func (c *Client) Login(id string, password string) *bytes.Buffer {
 
 	defer resp.Body.Close()
 
+	// create a buffer from body
 	buffer := bytes.NewBuffer(nil)
 
 	_, err := io.Copy(buffer, resp.Body)

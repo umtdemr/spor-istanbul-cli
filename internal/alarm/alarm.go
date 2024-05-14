@@ -9,6 +9,7 @@ import (
 	"time"
 )
 
+// PlayAlarm plays the audio file
 func PlayAlarm() {
 	f, err := os.Open("assets/alarm.mp3")
 	if err != nil {

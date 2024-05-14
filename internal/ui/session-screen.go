@@ -16,8 +16,6 @@ const (
 )
 
 var (
-	subtle = lipgloss.AdaptiveColor{Light: "#D9DCCF", Dark: "#383838"}
-
 	docStyle = lipgloss.NewStyle().Padding(1, 2, 1, 2)
 )
 
@@ -130,9 +128,9 @@ func (m SessionModel) GenerateSessionScreen(collections []*session.Collection) s
 				sessionRenderer.Foreground(lipgloss.Color("#FFF"))
 			}
 
-			applicableText := "Yer Var"
+			applicableText := "Applicable"
 			if !singleSession.Applicable {
-				applicableText = "Dolu"
+				applicableText = "Full"
 			}
 
 			details := lipgloss.JoinVertical(

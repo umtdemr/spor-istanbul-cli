@@ -7,6 +7,7 @@ import (
 	"net/url"
 )
 
+// GetSessions makes a request for the sessions page
 func (c *Client) GetSessions(sessionPostId string) *bytes.Buffer {
 	formData := url.Values{}
 	formData.Set("__EVENTTARGET", sessionPostId)
@@ -24,6 +25,7 @@ func (c *Client) GetSessions(sessionPostId string) *bytes.Buffer {
 	return buffer
 }
 
+// GetSubscriptionsPage makes a request for the subscriptions page
 func (c *Client) GetSubscriptionsPage() *bytes.Buffer {
 	req, _ := http.NewRequest(http.MethodGet, BASE_URL+SUBSCRIPTIONS_LIST_URL, nil)
 
