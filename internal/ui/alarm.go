@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/umtdemr/spor-istanbul-cli/internal/alarm"
 	"github.com/umtdemr/spor-istanbul-cli/internal/service"
 	"github.com/umtdemr/spor-istanbul-cli/internal/session"
 	"time"
@@ -14,6 +15,7 @@ type AlarmModel struct {
 	selectedSubscriptionId string
 	checkCount             int
 	sub                    chan bool
+	found                  bool // if the spot is found
 	err                    error
 }
 
@@ -67,6 +69,8 @@ func (m AlarmModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.checkCount++
 		if msg {
 			close(m.sub)
+			m.found = true
+			go alarm.PlayAlarm()
 			return m, nil
 		}
 		return m, m.waitForActivity()
