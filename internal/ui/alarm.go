@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/umtdemr/spor-istanbul-cli/internal/alarm"
 	"github.com/umtdemr/spor-istanbul-cli/internal/service"
 	"github.com/umtdemr/spor-istanbul-cli/internal/session"
@@ -90,6 +91,19 @@ func (m AlarmModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m AlarmModel) View() string {
 	doc := strings.Builder{}
+
+	if m.found {
+		successBox := lipgloss.
+			NewStyle().
+			Width(20).
+			Border(lipgloss.RoundedBorder()).
+			Background(lipgloss.Color("#53A653")).
+			Foreground(lipgloss.Color("#FFF")).
+			AlignHorizontal(lipgloss.Center).
+			Padding(2)
+		doc.WriteString(successBox.Render("✓ A spot found!!"))
+		return doc.String()
+	}
 
 	doc.WriteString(fmt.Sprintf("%s Checking an empty spot", m.spinner.View()))
 	doc.WriteString("\n")
