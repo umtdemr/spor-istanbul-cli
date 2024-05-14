@@ -2,10 +2,12 @@ package ui
 
 import (
 	"fmt"
+	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/umtdemr/spor-istanbul-cli/internal/alarm"
 	"github.com/umtdemr/spor-istanbul-cli/internal/service"
 	"github.com/umtdemr/spor-istanbul-cli/internal/session"
+	"strings"
 	"time"
 )
 
@@ -16,6 +18,7 @@ type AlarmModel struct {
 	checkCount             int
 	sub                    chan bool
 	found                  bool // if the spot is found
+	spinner                spinner.Model
 	err                    error
 }
 
@@ -23,8 +26,9 @@ type responseMsg bool
 
 func initialAlarmModel(api *service.Service) AlarmModel {
 	return AlarmModel{
-		api: api,
-		sub: make(chan bool),
+		api:     api,
+		sub:     make(chan bool),
+		spinner: spinner.New(),
 	}
 }
 
@@ -54,6 +58,7 @@ func (m AlarmModel) waitForActivity() tea.Cmd {
 
 func (m AlarmModel) alarmCmd() tea.Cmd {
 	return tea.Batch(
+		m.spinner.Tick,
 		m.listenForActivity(),
 		m.waitForActivity(),
 	)
@@ -73,11 +78,29 @@ func (m AlarmModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			go alarm.PlayAlarm()
 			return m, nil
 		}
+
 		return m, m.waitForActivity()
+	case spinner.TickMsg:
+		var cmd tea.Cmd
+		m.spinner, cmd = m.spinner.Update(msg)
+		return m, cmd
 	}
 	return m, nil
 }
 
 func (m AlarmModel) View() string {
-	return fmt.Sprintf("%s %s - %s - %v \n", m.selectedSession.Day, m.selectedSession.Date, m.selectedSession.Time, m.checkCount)
+	doc := strings.Builder{}
+
+	doc.WriteString(fmt.Sprintf("%s Checking an empty spot", m.spinner.View()))
+	doc.WriteString("\n")
+	doc.WriteString(fmt.Sprintf("Session Date: %s %s", m.selectedSession.Date, m.selectedSession.Day))
+	doc.WriteString("\n")
+	doc.WriteString(fmt.Sprintf("Session time: %s", m.selectedSession.Time))
+	doc.WriteString("\n")
+	doc.WriteString("\n")
+	doc.WriteString(fmt.Sprintf("%v times checked so far", m.checkCount))
+	doc.WriteString("\n")
+	doc.WriteString("\n")
+
+	return doc.String()
 }
