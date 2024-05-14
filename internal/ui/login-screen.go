@@ -5,6 +5,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/umtdemr/spor-istanbul-cli/internal/service"
+	"strings"
 )
 
 type (
@@ -96,7 +97,10 @@ func (m AuthModel) View() string {
 
 	title += screenTitle
 
-	return fmt.Sprintf(
+	doc := strings.Builder{}
+	doc.WriteString(dialogBoxStyle.Render(titleStyle.Render("Login")))
+
+	return doc.String() + "\n" + fmt.Sprintf(
 		"%s\n\n%s",
 		title,
 		m.textInput.View(),

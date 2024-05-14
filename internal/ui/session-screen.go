@@ -6,8 +6,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/umtdemr/spor-istanbul-cli/internal/service"
 	"github.com/umtdemr/spor-istanbul-cli/internal/session"
-	"golang.org/x/term"
-	"os"
 	"strings"
 )
 
@@ -19,15 +17,6 @@ const (
 
 var (
 	subtle = lipgloss.AdaptiveColor{Light: "#D9DCCF", Dark: "#383838"}
-
-	dialogBoxStyle = lipgloss.NewStyle().
-			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color("#874BFD")).
-			Padding(1, 0).
-			BorderTop(true).
-			BorderLeft(true).
-			BorderRight(true).
-			BorderBottom(true)
 
 	docStyle = lipgloss.NewStyle().Padding(1, 2, 1, 2)
 )
@@ -112,26 +101,15 @@ func (m SessionModel) View() string {
 }
 
 func (m SessionModel) GenerateSessionScreen(collections []*session.Collection) string {
-	physicalWidth, _, _ := term.GetSize(int(os.Stdout.Fd()))
 	doc := strings.Builder{}
 
-	{
-		title := lipgloss.NewStyle().Width(50).Align(lipgloss.Center).Render("Please select a session")
-
-		dialog := lipgloss.Place(width, 3,
-			lipgloss.Center, lipgloss.Center,
-			dialogBoxStyle.Render(title),
-			lipgloss.WithWhitespaceChars("-"),
-			lipgloss.WithWhitespaceForeground(subtle),
-		)
-
-		doc.WriteString(dialog + "\n\n")
-	}
+	doc.WriteString(dialogBoxStyle.Render(titleStyle.Render("Select a session")))
+	doc.WriteString("\n\n")
 
 	var renderedSessionColumns []string
 	currentSession := 0
 	for _, sessionList := range collections {
-		panel := lipgloss.NewStyle().AlignHorizontal(lipgloss.Center).Width(20)
+		panel := lipgloss.NewStyle().AlignHorizontal(lipgloss.Center).Width((terminalWidth - 30) / 4)
 		renderedPanelStr := lipgloss.JoinVertical(
 			lipgloss.Top,
 			panel.Render(sessionList.Day),
@@ -139,8 +117,8 @@ func (m SessionModel) GenerateSessionScreen(collections []*session.Collection) s
 		)
 		renderedSessionRows := []string{renderedPanelStr}
 		for _, singleSession := range sessionList.Sessions {
-			sessionTitle := lipgloss.NewStyle().AlignHorizontal(lipgloss.Center).Width(20)
-			sessionRenderer := lipgloss.NewStyle().PaddingTop(2).PaddingBottom(2).Width(20).Border(lipgloss.RoundedBorder(), true).MarginRight(1)
+			sessionTitle := lipgloss.NewStyle().AlignHorizontal(lipgloss.Center).Width((terminalWidth - 30) / 4)
+			sessionRenderer := lipgloss.NewStyle().PaddingTop(2).PaddingBottom(2).Width((terminalWidth-30)/4).Border(lipgloss.RoundedBorder(), true).MarginRight(1)
 			if singleSession.Applicable {
 				sessionRenderer.BorderForeground(lipgloss.Color("#00ff00"))
 			} else {
@@ -163,7 +141,7 @@ func (m SessionModel) GenerateSessionScreen(collections []*session.Collection) s
 					fmt.Sprintf("%s / %s", singleSession.Available, singleSession.Limit),
 				),
 				sessionTitle.MarginTop(1).Render(singleSession.Time),
-				sessionTitle.MarginTop(1).Render(applicableText),
+				sessionTitle.Render(applicableText),
 			)
 			renderedSessionRows = append(renderedSessionRows, sessionRenderer.Render(details))
 			currentSession++
@@ -180,10 +158,6 @@ func (m SessionModel) GenerateSessionScreen(collections []*session.Collection) s
 
 	allRendered := lipgloss.JoinHorizontal(lipgloss.Left, renderedSessionColumns...)
 	doc.WriteString(allRendered)
-
-	if physicalWidth > 0 {
-		docStyle = docStyle.MaxWidth(physicalWidth)
-	}
 
 	return docStyle.Render(doc.String())
 }

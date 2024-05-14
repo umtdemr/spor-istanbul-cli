@@ -2,9 +2,13 @@ package ui
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/umtdemr/spor-istanbul-cli/internal/service"
 	"github.com/umtdemr/spor-istanbul-cli/internal/session"
+	"golang.org/x/term"
 	"log"
+	"os"
+	"strings"
 )
 
 type screen int
@@ -14,6 +18,23 @@ const (
 	subscriptionScreen
 	sessionScreen
 	alarmScreen
+)
+
+var terminalWidth, terminalHeight, _ = term.GetSize(int(os.Stdout.Fd()))
+
+var (
+	ContainerStyle = lipgloss.NewStyle().
+			Align(lipgloss.Center).
+			Border(lipgloss.NormalBorder())
+	titleStyle     = lipgloss.NewStyle().Width(terminalWidth - 15).Align(lipgloss.Center)
+	dialogBoxStyle = lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("#874BFD")).
+			Padding(1, 0).
+			BorderTop(true).
+			BorderLeft(true).
+			BorderRight(true).
+			BorderBottom(true)
 )
 
 type screenDoneMsg struct{}
@@ -108,17 +129,31 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
+	view := ""
+
 	switch m.currentScreen {
 	case authScreen:
-		return m.authModel.View()
+		view = m.authModel.View()
 	case subscriptionScreen:
-		return m.subscriptionModel.View()
+		view = m.subscriptionModel.View()
 	case sessionScreen:
-		return m.sessionScreenModel.View()
+		view = m.sessionScreenModel.View()
 	case alarmScreen:
-		return m.alarmScreenModel.View()
+		view = m.alarmScreenModel.View()
 	}
-	return ""
+
+	doc := strings.Builder{}
+
+	mainView := ContainerStyle.Width(terminalWidth - 2).Height(terminalHeight - 10).MaxHeight(terminalHeight).Render(view)
+
+	footer := lipgloss.NewStyle().
+		Width(terminalWidth - 2).
+		Align(lipgloss.Center)
+
+	doc.WriteString(mainView)
+	doc.WriteString("\n\n")
+	doc.WriteString(footer.Render("↑/↓ to select"))
+	return doc.String()
 }
 
 func StartApp() {

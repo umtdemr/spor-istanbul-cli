@@ -83,7 +83,7 @@ func (m SubscriptionModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m SubscriptionModel) View() string {
 	if m.loading {
-		return "loading...."
+		return "\nloading...."
 	}
 	return m.GenerateSubscriptionListScreen(m.subscriptions)
 }
@@ -108,7 +108,7 @@ func (m SubscriptionModel) GenerateSubscriptionListScreen(subscriptions []*sessi
 			if row == 0 {
 				return lipgloss.NewStyle().AlignHorizontal(lipgloss.Center)
 			}
-			style = style.AlignHorizontal(lipgloss.Center).Padding(1)
+			style = style.Align(lipgloss.Center).Padding(1).Width((terminalWidth - 10) / 3)
 
 			if row-1 == m.selectedSubscription {
 				style = style.Background(lipgloss.Color("#7239EA")).Foreground(lipgloss.Color("#fff"))
@@ -116,6 +116,10 @@ func (m SubscriptionModel) GenerateSubscriptionListScreen(subscriptions []*sessi
 
 			return style
 		})
+
+	doc.WriteString(dialogBoxStyle.Render(titleStyle.Render("Select a subscription")))
+	doc.WriteString("\n")
+
 	doc.WriteString(subscriptionTable.Render())
 	return doc.String()
 }
