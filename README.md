@@ -33,4 +33,4 @@ And that's it! If the app finds an empty spot, it plays an alarm and notifies yo
 
 Thanks to [bubble tea](https://github.com/charmbracelet/bubbletea) and [lip gloss](https://github.com/charmbracelet/lipgloss)
 libraries, I've designed the screens very quickly. I've used [goquery](https://github.com/PuerkitoBio/goquery) to parse HTML.
-To play an audio for the alarm, I've used [beep](https://github.com/faiface/beep).
+To play an audio for the alarm, I've used [beep](https://github.com/gopxl/beep).
