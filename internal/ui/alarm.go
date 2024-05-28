@@ -46,7 +46,7 @@ func (m AlarmModel) listenForActivity() tea.Cmd {
 				return nil
 			}
 			m.sub <- val
-			time.Sleep(5 * time.Second)
+			time.Sleep(30 * time.Second)
 		}
 	}
 }
