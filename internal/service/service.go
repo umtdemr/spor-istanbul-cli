@@ -22,6 +22,12 @@ func NewService() *Service {
 // Login a wrapper method for login
 // After we get the response, we check the page title if the login is successful or not.
 func (s *Service) Login(id string, password string) bool {
+	getBody := s.client.LoginGet()
+
+	viewState, _ := s.parser.GetViewState(getBody)
+
+	s.client.ViewState = viewState
+
 	body := s.client.Login(id, password)
 	title, ok := s.parser.GetTitle(body)
 
@@ -35,7 +41,10 @@ func (s *Service) Login(id string, password string) bool {
 
 func (s *Service) GetSubscriptions() []*session.Subscription {
 	body := s.client.GetSubscriptionsPage()
-	return s.parser.GetSubscriptions(body)
+	sessions, viewState := s.parser.GetSubscriptions(body)
+
+	s.client.ViewState = viewState
+	return sessions
 }
 
 func (s *Service) GetSessions(postRequestId string) []*session.Collection {

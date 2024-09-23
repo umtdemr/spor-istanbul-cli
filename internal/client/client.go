@@ -8,6 +8,7 @@ import (
 type Client struct {
 	BaseURL    string
 	HttpClient *http.Client
+	ViewState  string
 }
 
 func NewClient() *Client {
