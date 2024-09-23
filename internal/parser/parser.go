@@ -1,6 +1,9 @@
 package parser
 
 import (
+	"bytes"
+	"errors"
+	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/umtdemr/spor-istanbul-cli/internal/session"
 	"golang.org/x/net/html"
@@ -44,8 +47,8 @@ func (p *Parser) GetTitle(r io.Reader) (string, bool) {
 	return traverse(doc)
 }
 
-func (p *Parser) GetSubscriptions(r io.Reader) []*session.Subscription {
-	doc, _ := goquery.NewDocumentFromReader(r)
+func (p *Parser) GetSubscriptions(buffer *bytes.Buffer) ([]*session.Subscription, string) {
+	doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(buffer.Bytes()))
 
 	var subscriptions []*session.Subscription
 
@@ -92,7 +95,8 @@ func (p *Parser) GetSubscriptions(r io.Reader) []*session.Subscription {
 		})
 	})
 
-	return subscriptions
+	viewState, _ := p.GetViewState(bytes.NewReader(buffer.Bytes()))
+	return subscriptions, viewState
 }
 
 func (p *Parser) ParseSessionsDoc(r io.Reader) []*session.Collection {
@@ -145,8 +149,7 @@ func (p *Parser) ParseSessionsDoc(r io.Reader) []*session.Collection {
 			input := sessionNode.Find("input[type='checkbox']")
 
 			sessionCollection.Sessions = append(sessionCollection.Sessions, &session.Session{
-				Limit:      strings.TrimSpace(sessionNode.Find(".label-primary").Text()),
-				Available:  strings.TrimSpace(sessionNode.Find(".label-danger").Text()),
+				Available:  strings.TrimSpace(sessionNode.Find(".label-success").Text()),
 				Time:       strings.TrimSpace(sessionNode.Find("span[id*='lblSeansSaat']").Text()),
 				Id:         sessionId,
 				Applicable: input.Length() > 0,
@@ -162,4 +165,27 @@ func (p *Parser) ParseSessionsDoc(r io.Reader) []*session.Collection {
 	})
 
 	return sessionCollections
+}
+
+// GetViewState gets view state value from input
+func (p *Parser) GetViewState(r io.Reader) (string, error) {
+	var err error
+
+	doc, _ := goquery.NewDocumentFromReader(r)
+
+	viewState := ""
+	selector := fmt.Sprintf("input[name=%s]", "\"__VIEWSTATE\"")
+
+	doc.Find(selector).Each(func(i int, selection *goquery.Selection) {
+		value, exists := selection.Attr("value")
+		if exists {
+			viewState = value
+		}
+	})
+
+	if viewState == "" {
+		err = errors.New("could not extract viewstate")
+	}
+
+	return viewState, err
 }
