@@ -149,8 +149,7 @@ func (p *Parser) ParseSessionsDoc(r io.Reader) []*session.Collection {
 			input := sessionNode.Find("input[type='checkbox']")
 
 			sessionCollection.Sessions = append(sessionCollection.Sessions, &session.Session{
-				Limit:      strings.TrimSpace(sessionNode.Find(".label-primary").Text()),
-				Available:  strings.TrimSpace(sessionNode.Find(".label-danger").Text()),
+				Available:  strings.TrimSpace(sessionNode.Find(".label-success").Text()),
 				Time:       strings.TrimSpace(sessionNode.Find("span[id*='lblSeansSaat']").Text()),
 				Id:         sessionId,
 				Applicable: input.Length() > 0,

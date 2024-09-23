@@ -116,7 +116,7 @@ func (m SessionModel) GenerateSessionScreen(collections []*session.Collection) s
 		renderedSessionRows := []string{renderedPanelStr}
 		for _, singleSession := range sessionList.Sessions {
 			sessionTitle := lipgloss.NewStyle().AlignHorizontal(lipgloss.Center).Width((terminalWidth - 30) / 4)
-			sessionRenderer := lipgloss.NewStyle().PaddingTop(2).PaddingBottom(2).Width((terminalWidth-30)/4).Border(lipgloss.RoundedBorder(), true).MarginRight(1)
+			sessionRenderer := lipgloss.NewStyle().PaddingTop(1).PaddingBottom(1).Width((terminalWidth-30)/4).Border(lipgloss.RoundedBorder(), true).MarginRight(1)
 			if singleSession.Applicable {
 				sessionRenderer.BorderForeground(lipgloss.Color("#00ff00"))
 			} else {
@@ -136,9 +136,9 @@ func (m SessionModel) GenerateSessionScreen(collections []*session.Collection) s
 			details := lipgloss.JoinVertical(
 				lipgloss.Top,
 				sessionTitle.Render(
-					fmt.Sprintf("%s / %s", singleSession.Available, singleSession.Limit),
+					fmt.Sprintf("%s", singleSession.Available),
 				),
-				sessionTitle.MarginTop(1).Render(singleSession.Time),
+				sessionTitle.Render(singleSession.Time),
 				sessionTitle.Render(applicableText),
 			)
 			renderedSessionRows = append(renderedSessionRows, sessionRenderer.Render(details))
